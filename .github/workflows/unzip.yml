@@ -3,7 +3,8 @@ name: Auto Unzip Goat-bot
 on:
   push:
     paths:
-      - 'Goat-bot.zip' # কেবল Goat-bot.zip আপলোড বা চেঞ্জ হলেই এই অটোরান চালু হবে
+      - 'Goat-bot.zip'
+  workflow_dispatch: # এটি যোগ করলে আপনি হাত দিয়ে বাটন চেপেও রান করতে পারবেন
 
 jobs:
   unzip-job:
@@ -15,9 +16,7 @@ jobs:
 
       - name: Unzip Goat-bot.zip to Root Folder
         run: |
-          # রুট ফোল্ডারে ফাইলগুলো Unzip করা হচ্ছে
           unzip -o Goat-bot.zip -d ./
-          # আনজিপ শেষ হলে আসল Zip ফাইলটি মুছে ফেলা হবে
           rm Goat-bot.zip
 
       - name: Commit and Push changes
