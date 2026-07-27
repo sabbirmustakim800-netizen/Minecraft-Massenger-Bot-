@@ -11,7 +11,7 @@
     "EMAIL": "your email",
     "PASSWORD": "your password",
     "OTPKEY": "",
-    "BOTNAME": "─꯭─⃝‌‌𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭",
+    "BOTNAME": "─꯭─⃝lunner mc 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭",
     "PREFIX": "/",
     "reactUnsend": {
         "enable": true,
@@ -23,7 +23,7 @@
         "notes": "If enable = true, bot will unsend any message reacted with these emojis. If onlyAdmin = true, only adminBot IDs can trigger it."
     },
     "ADMINBOT": [
-        "100001039692046",
+        "100083749841206",
         "61586663640809",
         "100044713412032"
     ],
