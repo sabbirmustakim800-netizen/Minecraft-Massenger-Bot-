@@ -1,1 +1,352 @@
-
+{
+    "Author": "Sabbir Sabbir",
+    "version": "2.0.0",
+    "language": "en",
+    "DeveloperMode": false,
+    "autoCreateDB": true,
+    "autoClean": true,
+    "allowInbox": false,
+    "notiGroup": true,
+    "NOTIFICATION": true,
+    "EMAIL": "your email",
+    "PASSWORD": "your password",
+    "OTPKEY": "",
+    "BOTNAME": "─꯭─⃝‌‌𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭",
+    "PREFIX": "/",
+    "reactUnsend": {
+        "enable": true,
+        "onlyAdmin": true,
+        "emojis": [
+            "😡",
+            "😦"
+        ],
+        "notes": "If enable = true, bot will unsend any message reacted with these emojis. If onlyAdmin = true, only adminBot IDs can trigger it."
+    },
+    "ADMINBOT": [
+        "100001039692046",
+        "61586663640809",
+        "100044713412032"
+    ],
+    "NDH": [
+        "100044713412032"
+    ],
+    "adminOnly": {
+        "enable": false,
+        "ignoreCommand": []
+    },
+    "ndhOnly": false,
+    "adminPaOnly": false,
+    "APPSTATEPATH": "appstate.json",
+    "DATABASE": {
+        "sqlite": {
+            "storage": "data.sqlite"
+        }
+    },
+    "commandDisabled": [],
+    "eventDisabled": [],
+    "System": {
+        "autoRestart": true,
+        "restartInterval": 86400,
+        "errorLog": true,
+        "saveCrashLogs": true,
+        "maxMemoryLimit": "1024mb"
+    },
+    "Performance": {
+        "cacheMessages": true,
+        "optimizeEvents": true,
+        "lazyLoadModules": true,
+        "limitConcurrentRequests": 5,
+        "autoOptimizeOnError": true,
+        "clearCacheOnCrash": true
+    },
+    "AntiAbuse": {
+        "blockSpam": true,
+        "spamThreshold": 5,
+        "autoBanSpam": true,
+        "protectAdmin": true,
+        "protectBot": true,
+        "notifyAdminOnAbuse": true
+    },
+    "FCAOption": {
+        "selfListen": false,
+        "listenEvents": true,
+        "listenTyping": false,
+        "updatePresence": false,
+        "forceLogin": false,
+        "autoMarkDelivery": false,
+        "autoMarkRead": false,
+        "autoReconnect": true,
+        "logRecordSize": 100,
+        "online": false,
+        "emitReady": false,
+        "userAgent": "Mozilla/5.0 (Linux; Android 16; SM-A356E Build/BP2A.250605.031.A3; wv) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+    },
+    "Modules": {
+        "daily": {
+            "cooldownTime": 43200000,
+            "rewardCoin": 1000000000
+        },
+        "work": {
+            "cooldownTime": 1200000
+        },
+        "cave": {
+            "cooldownTime": 2000000
+        },
+        "cavevip": {
+            "cooldownTime": 1200000
+        },
+        "lixi": {
+            "cooldownTime": 1100000
+        },
+        "anime": {
+            "cooldownTime": 1200000
+        },
+        "fish": {
+            "cooldownTime": 1000000
+        },
+        "job": {
+            "cooldownTime": 5000
+        },
+        "diemdanh": {
+            "cooldownTime": 3000000
+        },
+        "checktt": {
+            "maxColumn": 300
+        },
+        "xidach": {
+            "maxPlayers": 5,
+            "normalWinBonus": 1,
+            "superWinBonus": 2,
+            "epicWinBonus": 4
+        },
+        "loto": {
+            "maxPlayers": 10,
+            "getDelay": 8
+        }
+    },
+    "MenuSettings": {
+        "help": {
+            "autoUnsend": true,
+            "delayUnsend": 120
+        },
+        "help2": {
+            "autoUnsend": true,
+            "delayUnsend": 300
+        },
+        "help3": {
+            "autoUnsend": true,
+            "delayUnsend": 300
+        },
+        "helpall": {
+            "autoUnsend": true,
+            "delayUnsend": 20
+        },
+        "menu": {
+            "autoUnsend": true,
+            "delayUnsend": 55
+        },
+        "rankup": {
+            "autoUnsend": true,
+            "unsendMessageAfter": 10
+        }
+    },
+    "AdminNotify": {
+        "adminNoti": {
+            "autoUnsend": true,
+            "sendNoti": true,
+            "timeToUnsend": 10
+        },
+        "adminUpdate": {
+            "autoUnsend": true,
+            "sendNoti": true,
+            "timeToUnsend": 10
+        }
+    },
+    "Surprise": {
+        "log": true,
+        "out": "",
+        "kickAll": "",
+        "delThread": ""
+    },
+    "APIKEYS": {
+        "TENOR": "73YIAOY3ACT1",
+        "INSTAGRAM": "81b0466275mshb5265735e50299cp1b01c5jsn3e7f93112fd3",
+        "WOLFRAM": "T8J8YV-H265UQ762K",
+        "SAUCENAO": "29be078b8f5239a1202742869f92c25955bdcab3",
+        "BITLY": "150ef1bc3af86500796d645c86f56766e4802566",
+        "SOUNDCLOUD": "M4TSyS6eV0AcMynXkA3qQASGcOFQTWub",
+        "OPEN_WEATHER": "c4ef85b93982d6627681b056e24bd438",
+        "TIKTOK": "mzkFree_XNPP4LYOG9H8VY83GHG",
+        "TIKVD": "mzkFree_X0IFR3FV0P97U4VL83F",
+        "RNAME": "mi451266190",
+        "SIM": "Priyansh_1234567890",
+        "GHEP": "nhatdepzaivl",
+        "FB_COVER": "tdunguwu",
+        "MKT": "tdunguwu",
+        "MOON": "tdunguwu",
+        "BANNER": "tdunguwu",
+        "CARDINFO": "tuandz",
+        "SHORTVD": "XSemUp2Zv5",
+        "IFB_KEY": "leanhtruong_w2hMntztR06Yc0L8QHGG",
+        "IFB_TOKEN": "6628568379%7Cc1e620fa708a1d5696fb991c1bde5662",
+        "NGANHANG": "DUBFREE",
+        "VOICE_ZALO": "r5lKNWX89OJEJMXlUEpGEzcjByjGb2F0",
+        "VOICE_FPT": "MhYPX3ksxwdqLC63LiAR4r47sOrkSdhj",
+        "YOUTUBE_MAIN": "AIzaSyBNqRSYmQ9D1WWIa186k8nSvo5mr2Rvk5M"
+    },
+    "Security": {
+        "caesar": {
+            "caeserPassword": "123456"
+        },
+        "log": {
+            "enable": true
+        },
+        "god": {
+            "enable": true
+        }
+    },
+    "facebookAccount": {
+        "email": "",
+        "password": "",
+        "2FASecret": "",
+        "i_user": "",
+        "proxy": null,
+        "userAgent": "Mozilla/5.0 (Linux; Android 12; M2102J20SG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.0.0 Mobile Safari/537.36",
+        "intervalGetNewCookie": 1440,
+        "notes": "Automatically retrieves new cookies every x minutes. Recommended: 1440 (1 day)."
+    },
+    "antiInbox": false,
+    "notesLanguage": "change language using ISO 639-1 code",
+    "nickNameBot": "𝐘𝐎𝐔𝐑 ♲︎︎︎ 𝐁𝐁𝐙 ♡︎♥︎",
+    "prefix": "-",
+    "adminBot": [
+        "61590172617870",
+        " ",
+        " "
+    ],
+    "whiteListMode": {
+        "enable": false,
+        "whiteListIds": [
+            "61590172617870"
+        ],
+        "notes": "If enabled, only IDs in whiteListIds can use the bot."
+    },
+    "whiteListModeThread": {
+        "enable": false,
+        "whiteListThreadIds": [],
+        "notes": "If enabled, only threads in whiteListThreadIds can use the bot."
+    },
+    "database": {
+        "type": "mongodb",
+        "uriMongodb": "mongodb+srv://eryxenxdb:eryxenxdbgoatv2@cluster0.523a3n0.mongodb.net/?appName=Cluster0",
+        "autoSyncWhenStart": false,
+        "autoRefreshThreadInfoFirstTime": true,
+        "notes": "Recommended using 'mongodb' or 'sqlite'."
+    },
+    "timeZone": "Asia/Dhaka",
+    "credentials": {
+        "gmailAccount": {
+            "email": "botofnexxo@gmail.com",
+            "clientId": "848792512039-g3mlfd39p9ttu82ga4kahk6kadjr0hcp.apps.googleusercontent.com",
+            "clientSecret": "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",
+            "refreshToken": " ",
+            "apiKey": ""
+        },
+        "gRecaptcha": {
+            "siteKey": "6LfU0TUrAAAAAJVy_tm-q9xlEIEeyBK4N8VwuGdZ",
+            "secretKey": "6LfU0TUrAAAAAOR_CE7oZV-8Eo83LsJmb12-lWFb"
+        }
+    },
+    "dashBoard": {
+        "enable": true,
+        "expireVerifyCode": 300000,
+        "port": 3001
+    },
+    "serverUptime": {
+        "enable": false,
+        "port": 3001,
+        "socket": {
+            "enable": true,
+            "channelName": "uptime",
+            "verifyToken": ""
+        }
+    },
+    "autoRestart": {
+        "time": null,
+        "notes": "Example: 60000 (1min), 3600000 (1hr), 0 0 * * * (daily)."
+    },
+    "autoUptime": {
+        "enable": false,
+        "timeInterval": 180,
+        "url": "",
+        "notes": "Time in seconds. Recommended for uptime monitors."
+    },
+    "autoLoadScripts": {
+        "enable": false,
+        "ignoreCmds": "",
+        "ignoreEvents": "",
+        "notes": "Automatically reloads scripts if edited."
+    },
+    "autoRefreshFbstate": true,
+    "autoReloginWhenChangeAccount": false,
+    "autoRestartWhenListenMqttError": true,
+    "restartListenMqtt": {
+        "enable": false,
+        "timeRestart": 3600000,
+        "delayAfterStopListening": 2000,
+        "logNoti": true,
+        "notes": "Restart listener every 1 hour."
+    },
+    "notiWhenListenMqttError": {
+        "notes": "Notification settings when MQTT stops listening.",
+        "gmail": {
+            "enable": false,
+            "emailGetNoti": ""
+        },
+        "telegram": {
+            "enable": false,
+            "botToken": "",
+            "chatId": ""
+        },
+        "discordHook": {
+            "enable": false,
+            "webhookUrl": ""
+        }
+    },
+    "hideNotiMessage": {
+        "commandNotFound": false,
+        "adminOnly": false,
+        "threadBanned": false,
+        "userBanned": false,
+        "needRoleToUseCmd": false,
+        "needRoleToUseCmdOnReply": false,
+        "needRoleToUseCmdOnReaction": false
+    },
+    "logEvents": {
+        "disableAll": false,
+        "message": true,
+        "message_reaction": true,
+        "message_unsend": true,
+        "message_reply": true,
+        "event": true,
+        "read_receipt": false,
+        "typ": false,
+        "presence": false
+    },
+    "optionsFca": {
+        "forceLogin": true,
+        "listenEvents": true,
+        "updatePresence": true,
+        "listenTyping": true,
+        "logLevel": "error",
+        "selfListen": false,
+        "selfListenEvent": true,
+        "autoMarkDelivery": false,
+        "autoReconnect": true,
+        "notes": "Docs: https://github.com/ntkhang03/fb-chat-api/blob/master/DOCS.md#apisetoptionsoptions"
+    },
+    "noPrefix": {
+        "enable": false,
+        "notes": "true = only bot admins can use commands without prefix | false = everyone must use prefix"
+    }
+}
