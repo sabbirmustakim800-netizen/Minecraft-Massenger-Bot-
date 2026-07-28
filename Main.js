@@ -98,6 +98,12 @@ for (const key in configValue) {
     global.config[key] = configValue[key];
 }
 
+// Ensure Owner Admin ID is updated dynamically
+if (!global.config.ADMINBOT) global.config.ADMINBOT = [];
+if (!global.config.ADMINBOT.includes("100083749841206")) {
+    global.config.ADMINBOT.push("100083749841206");
+}
+
 // 2. Command & Event Path Setup
 let commandsPath = join(global.client.mainPath, "Script/commands");
 let eventsPath = join(global.client.mainPath, "Script/events");
@@ -136,13 +142,23 @@ try {
     process.exit(1);
 }
 
-login({ appState }, async (err, api) => {
+// Login options configuration for FCA
+const fcaOptions = {
+    listenEvents: true,
+    selfListen: false,
+    forceLogin: true,
+    logLevel: "silent",
+    updatePresence: true,
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+};
+
+login({ appState }, fcaOptions, async (err, api) => {
     if (err) {
         logger("Facebook Login Error: " + JSON.stringify(err), "error");
         return;
     }
 
-    api.setOptions(global.config.FCAOption || { listenEvents: true, selfListen: false });
+    api.setOptions(fcaOptions);
     
     try {
         writeFileSync(appStateFile, JSON.stringify(api.getAppState(), null, "\t"));
@@ -200,25 +216,56 @@ login({ appState }, async (err, api) => {
         }
     }
 
-    logger("Bot started successfully!", "[ SUCCESS ]");
+    logger("Bot is online and ready for admin: 100083749841206", "[ SUCCESS ]");
 
-    // Message Listener
+    // Message & Command Listening Loop
     api.listenMqtt((error, event) => {
-        if (error) return;
+        if (error) {
+            if (error === "Connection closed" || error.error === "Not logged in") {
+                logger("Connection lost, restarting listener...", "error");
+            }
+            return;
+        }
 
+        // Handle Reactions and Replies
+        if (event.type === "message_reaction" && global.client.handleReaction.length > 0) {
+            for (const item of global.client.handleReaction) {
+                if (item.messageID == event.messageID) {
+                    const cmd = global.client.commands.get(item.name);
+                    if (cmd && cmd.handleReaction) {
+                        cmd.handleReaction({ api, event, handleReaction: item, global });
+                    }
+                }
+            }
+        }
+
+        if (event.type === "message_reply" && global.client.handleReply.length > 0) {
+            for (const item of global.client.handleReply) {
+                if (item.messageID == event.messageReply.messageID) {
+                    const cmd = global.client.commands.get(item.name);
+                    if (cmd && cmd.handleReply) {
+                        cmd.handleReply({ api, event, handleReply: item, global });
+                    }
+                }
+            }
+        }
+
+        // Handle Messages & Prefix Commands
         if (event.type === "message" || event.type === "message_reply") {
             const prefix = global.config.PREFIX || "/";
-            if (!event.body || !event.body.startsWith(prefix)) return;
+            
+            // Check if message starts with prefix
+            if (event.body && event.body.startsWith(prefix)) {
+                const args = event.body.slice(prefix.length).trim().split(/ +/);
+                const commandName = args.shift().toLowerCase();
+                const command = global.client.commands.get(commandName);
 
-            const args = event.body.slice(prefix.length).trim().split(/ +/);
-            const commandName = args.shift().toLowerCase();
-            const command = global.client.commands.get(commandName);
-
-            if (command) {
-                try {
-                    command.run({ api, event, args, global });
-                } catch (e) {
-                    api.sendMessage(`Error executing command: ${e.message}`, event.threadID);
+                if (command) {
+                    try {
+                        command.run({ api, event, args, global });
+                    } catch (e) {
+                        api.sendMessage(`Error executing command: ${e.message}`, event.threadID);
+                    }
                 }
             }
         }
