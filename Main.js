@@ -6,7 +6,7 @@ const rawLogger = require("./utils/log");
 const login = require("fca-unofficial");
 const axios = require("axios");
 
-// Safe Logger Wrapper
+// Safe Logger Function
 const logger = (msg, type = "[ BOT ]") => {
     if (typeof rawLogger === "function") {
         rawLogger(msg, type);
@@ -30,7 +30,7 @@ const BOT_ART = `
 
 console.log(BOT_ART);
 
-// Global State Setup
+// Global Setup
 global.client = {
     commands: new Map(),
     events: new Map(),
@@ -75,49 +75,30 @@ global.configModule = new Object();
 global.moduleData = new Array();
 global.language = new Object();
 
-// 1. Config Loader
+// 1. Safe Config Loader
 var configValue;
-global.client.configPath = join(global.client.mainPath, "config.json");
+const configPath = join(process.cwd(), "config.json");
+global.client.configPath = configPath;
 
-if (existsSync(global.client.configPath)) {
+if (existsSync(configPath)) {
     try {
-        configValue = require(global.client.configPath);
-        logger("Found config.json", "[ GLOBAL BOT ]");
+        const rawConfig = readFileSync(configPath, "utf-8");
+        configValue = JSON.parse(rawConfig);
+        logger("Found and loaded config.json successfully", "[ GLOBAL BOT ]");
     } catch (e) {
-        logger("Error parsing config.json", "error");
-    }
-} else if (existsSync(global.client.configPath.replace(/\.json/g, "") + ".temp")) {
-    try {
-        configValue = JSON.parse(readFileSync(global.client.configPath.replace(/\.json/g, "") + ".temp"));
-        logger("Loaded backup config.temp", "[ GLOBAL BOT ]");
-    } catch (e) {
-        logger("Error reading config.temp", "error");
+        logger("Error parsing config.json: " + e.message, "error");
+        process.exit(1);
     }
 } else {
-    logger("config.json not found in root directory!", "error");
+    logger("config.json not found in path: " + configPath, "error");
     process.exit(1);
 }
 
-try {
-    for (const key in configValue) {
-        global.config[key] = configValue[key];
-    }
-    logger("Config Loaded successfully!", "[ GLOBAL BOT ]");
-} catch {
-    logger("Can't load config.json", "error");
-    process.exit(1);
+for (const key in configValue) {
+    global.config[key] = configValue[key];
 }
 
-// Config backup write
-try {
-    writeFileSync(
-        global.client.configPath + ".temp",
-        JSON.stringify(global.config, null, 4),
-        "utf-8"
-    );
-} catch (e) {}
-
-// 2. Detect Command & Event Paths
+// 2. Command & Event Path Setup
 let commandsPath = join(global.client.mainPath, "Script/commands");
 let eventsPath = join(global.client.mainPath, "Script/events");
 
@@ -143,13 +124,13 @@ var appStateFile = resolve(
 );
 
 if (!existsSync(appStateFile)) {
-    logger("appstate.json file not found! Please check your root directory.", "error");
+    logger("appstate.json not found! Check your root directory.", "error");
     process.exit(1);
 }
 
 var appState;
 try {
-    appState = require(appStateFile);
+    appState = JSON.parse(readFileSync(appStateFile, "utf-8"));
 } catch (e) {
     logger("Failed to parse appstate.json!", "error");
     process.exit(1);
@@ -162,12 +143,13 @@ login({ appState }, async (err, api) => {
     }
 
     api.setOptions(global.config.FCAOption || { listenEvents: true, selfListen: false });
+    
     try {
         writeFileSync(appStateFile, JSON.stringify(api.getAppState(), null, "\t"));
     } catch (e) {}
 
     global.client.api = api;
-    global.config.version = "1.2.14";
+    global.config.version = "2.0.0";
     global.client.timeStart = new Date().getTime();
 
     // Load Commands
@@ -225,7 +207,7 @@ login({ appState }, async (err, api) => {
         if (error) return;
 
         if (event.type === "message" || event.type === "message_reply") {
-            const prefix = global.config.PREFIX || "!";
+            const prefix = global.config.PREFIX || "/";
             if (!event.body || !event.body.startsWith(prefix)) return;
 
             const args = event.body.slice(prefix.length).trim().split(/ +/);
