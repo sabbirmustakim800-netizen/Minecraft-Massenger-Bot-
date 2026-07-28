@@ -6,7 +6,7 @@ const logger = require("./utils/log");
 const login = require("Sabbir-fca");
 const axios = require("axios");
 
-const listPackage = JSON.parse(readFileSync("./package.json")).dependencies;
+const listPackage = JSON.parse(readFileSync("./package.json")).dependencies || {};
 const listbuiltinModules = require("module").builtinModules;
 
 const BOT_ART = `
@@ -20,7 +20,9 @@ const BOT_ART = `
              FB BOT OWNER
 `;
 
-// Initialize Global Data Containers
+console.log(BOT_ART);
+
+// Global State
 global.client = {
     commands: new Map(),
     events: new Map(),
@@ -65,17 +67,17 @@ global.configModule = new Object();
 global.moduleData = new Array();
 global.language = new Object();
 
-// Load Configuration File
+// 1. Config Loader
 var configValue;
 try {
     global.client.configPath = join(global.client.mainPath, "config.json");
     configValue = require(global.client.configPath);
-    logger.log("Found file config.json", "[ GLOBAL BOT ]");
+    logger.log("Found config.json", "[ GLOBAL BOT ]");
 } catch {
     if (existsSync(global.client.configPath.replace(/\.json/g, "") + ".temp")) {
         configValue = readFileSync(global.client.configPath.replace(/\.json/g, "") + ".temp");
         configValue = JSON.parse(configValue);
-        logger.log("Found file " + global.client.configPath.replace(/\.json/g, "") + ".temp");
+        logger.log("Loaded backup config.temp", "[ GLOBAL BOT ]");
     } else {
         return logger.log("config.json not found!", "error");
     }
@@ -85,49 +87,49 @@ try {
     for (const key in configValue) {
         global.config[key] = configValue[key];
     }
-    logger.log("Config Loaded!");
+    logger.log("Config Loaded successfully!", "[ GLOBAL BOT ]");
 } catch {
     return logger.log("Can't load config.json", "error");
 }
 
-const { Sequelize, sequelize } = require("./includes/database");
-
-// Update config backup
+// Config backup write
 writeFileSync(
     global.client.configPath + ".temp",
     JSON.stringify(global.config, null, 4),
     "utf-8"
 );
 
-// Load Language File
-const langFile = readFileSync(
-    __dirname + "/languages/" + (global.config.language || "en") + ".lang",
-    { encoding: "utf-8" }
-).split(/\r?\n|\r/);
+// 2. Language Loader
+try {
+    const langFilePath = join(__dirname, "languages", (global.config.language || "en") + ".lang");
+    if (existsSync(langFilePath)) {
+        const langFile = readFileSync(langFilePath, { encoding: "utf-8" }).split(/\r?\n|\r/);
+        const langData = langFile.filter(line => line.indexOf("#") !== 0 && line !== "");
 
-const langData = langFile.filter(line => line.indexOf("#") !== 0 && line !== "");
+        for (const item of langData) {
+            const getSeparator = item.indexOf("=");
+            const itemKey = item.slice(0, getSeparator);
+            const itemValue = item.slice(getSeparator + 1, item.length);
+            const head = itemKey.slice(0, itemKey.indexOf("."));
+            const key = itemKey.replace(head + ".", "");
+            const value = itemValue.replace(/\\n/gi, "\n");
 
-for (const item of langData) {
-    const getSeparator = item.indexOf("=");
-    const itemKey = item.slice(0, getSeparator);
-    const itemValue = item.slice(getSeparator + 1, item.length);
-    const head = itemKey.slice(0, itemKey.indexOf("."));
-    const key = itemKey.replace(head + ".", "");
-    const value = itemValue.replace(/\\n/gi, "\n");
-
-    if (typeof global.language[head] === "undefined") {
-        global.language[head] = new Object();
+            if (typeof global.language[head] === "undefined") {
+                global.language[head] = new Object();
+            }
+            global.language[head][key] = value;
+        }
     }
-    global.language[head][key] = value;
+} catch (e) {
+    logger.log("Language file load warning: " + e.message, "warning");
 }
 
-// Global Localizer Function
 global.getText = function (...args) {
     const langContainer = global.language;
-    if (!langContainer.hasOwnProperty(args[0])) {
-        throw __filename + " - Not found key language: " + args[0];
+    if (!langContainer || !langContainer.hasOwnProperty(args[0])) {
+        return args[1] || args[0];
     }
-    var text = langContainer[args[0]][args[1]];
+    var text = langContainer[args[0]][args[1]] || args[1];
     for (var i = args.length - 1; i > 1; i--) {
         const reg = new RegExp("%" + (i - 1), "g");
         text = text.replace(reg, args[i]);
@@ -135,128 +137,126 @@ global.getText = function (...args) {
     return text;
 };
 
-// Load Facebook AppState & Login
-try {
-    var appStateFile = resolve(
-        join(global.client.mainPath, global.config.APPSTATEPATH || "appstate.json")
-    );
-    var appState = require(appStateFile);
-    logger.log(global.getText("mirai", "foundPathAppstate"));
-} catch {
-    return logger.log(global.getText("mirai", "notFoundPathAppstate"), "error");
+// 3. Detect Correct Command/Event Paths Automatically
+let commandsPath = join(global.client.mainPath, "Script/commands");
+let eventsPath = join(global.client.mainPath, "Script/events");
+
+if (!existsSync(commandsPath)) {
+    if (existsSync(join(global.client.mainPath, "modules/commands"))) {
+        commandsPath = join(global.client.mainPath, "modules/commands");
+    } else if (existsSync(join(global.client.mainPath, "commands"))) {
+        commandsPath = join(global.client.mainPath, "commands");
+    }
 }
 
-function onBot({ models }) {
-    login({ appState }, async (err, api) => {
-        if (err) return logger(JSON.stringify(err), "error");
+if (!existsSync(eventsPath)) {
+    if (existsSync(join(global.client.mainPath, "modules/events"))) {
+        eventsPath = join(global.client.mainPath, "modules/events");
+    } else if (existsSync(join(global.client.mainPath, "events"))) {
+        eventsPath = join(global.client.mainPath, "events");
+    }
+}
 
-        api.setOptions(global.config.FCAOption);
-        writeFileSync(appStateFile, JSON.stringify(api.getAppState(), null, "\t"));
+// 4. AppState Check & Login
+var appStateFile = resolve(
+    join(global.client.mainPath, global.config.APPSTATEPATH || "appstate.json")
+);
 
-        global.client.api = api;
-        global.config.version = "1.2.14";
-        global.client.timeStart = new Date().getTime();
+if (!existsSync(appStateFile)) {
+    return logger.log("appstate.json file not found! Please provide a valid appstate.", "error");
+}
 
-        // Load Commands
-        (function () {
-            const commandFiles = readdirSync(join(global.client.mainPath, "Script/commands"))
-                .filter(file => file.endsWith(".js") && !file.includes("example") && !global.config.commandDisabled.includes(file));
+var appState = require(appStateFile);
 
-            for (const file of commandFiles) {
+login({ appState }, async (err, api) => {
+    if (err) return logger.log("Facebook Login Error: " + JSON.stringify(err), "error");
+
+    api.setOptions(global.config.FCAOption || { listenEvents: true, selfListen: false });
+    writeFileSync(appStateFile, JSON.stringify(api.getAppState(), null, "\t"));
+
+    global.client.api = api;
+    global.config.version = "1.2.14";
+    global.client.timeStart = new Date().getTime();
+
+    // Load Commands
+    if (existsSync(commandsPath)) {
+        const commandFiles = readdirSync(commandsPath)
+            .filter(file => file.endsWith(".js") && !file.includes("example") && !(global.config.commandDisabled || []).includes(file));
+
+        for (const file of commandFiles) {
+            try {
+                var command = require(join(commandsPath, file));
+                if (!command.config || !command.run) continue;
+
+                if (command.config.dependencies && typeof command.config.dependencies === "object") {
+                    for (const pkg in command.config.dependencies) {
+                        try {
+                            global.nodemodule[pkg] = require(pkg);
+                        } catch {
+                            execSync(`npm install ${pkg}@${command.config.dependencies[pkg] || "latest"}`, { stdio: "ignore" });
+                            global.nodemodule[pkg] = require(pkg);
+                        }
+                    }
+                }
+
+                if (command.handleEvent) global.client.eventRegistered.push(command.config.name);
+                global.client.commands.set(command.config.name, command);
+                logger.log(`Loaded Command: ${command.config.name}`, "[ COMMAND ]");
+            } catch (err) {
+                logger.log(`Failed to load command ${file}: ${err.message}`, "error");
+            }
+        }
+    }
+
+    // Load Events
+    if (existsSync(eventsPath)) {
+        const eventFiles = readdirSync(eventsPath)
+            .filter(file => file.endsWith(".js") && !(global.config.eventDisabled || []).includes(file));
+
+        for (const file of eventFiles) {
+            try {
+                var event = require(join(eventsPath, file));
+                if (!event.config || !event.run) continue;
+
+                global.client.events.set(event.config.name, event);
+                logger.log(`Loaded Event: ${event.config.name}`, "[ EVENT ]");
+            } catch (err) {
+                logger.log(`Failed to load event ${file}: ${err.message}`, "error");
+            }
+        }
+    }
+
+    logger.log(`Bot started successfully! Premium FCA active.`, "[ SUCCESS ]");
+
+    // 5. Message Listener (Fixes the non-responsive bot issue)
+    const handleListener = require("./includes/listen")({ api });
+    
+    api.listenMqtt((error, event) => {
+        if (error) {
+            if (JSON.stringify(error).includes("404")) {
+                logger.log("Connection lost, retrying...", "error");
+            }
+            return;
+        }
+        
+        // Execute handleListener if available, or basic command trigger
+        if (typeof handleListener === "function") {
+            handleListener(event);
+        } else if (event.type === "message" || event.type === "message_reply") {
+            const prefix = global.config.PREFIX || "!";
+            if (!event.body || !event.body.startsWith(prefix)) return;
+
+            const args = event.body.slice(prefix.length).trim().split(/ +/);
+            const commandName = args.shift().toLowerCase();
+            const command = global.client.commands.get(commandName);
+
+            if (command) {
                 try {
-                    var command = require(join(global.client.mainPath, "Script/commands", file));
-
-                    if (!command.config || !command.run || !command.config.commandCategory) {
-                        throw new Error(global.getText("mirai", "errorFormat"));
-                    }
-                    if (global.client.commands.has(command.config.name || "")) {
-                        throw new Error(global.getText("mirai", "nameExist"));
-                    }
-
-                    // Auto-install missing dependencies
-                    if (command.config.dependencies && typeof command.config.dependencies === "object") {
-                        for (const pkg in command.config.dependencies) {
-                            const pkgPath = join(__dirname, "nodemodule", "node_modules", pkg);
-                            try {
-                                if (!global.nodemodule.hasOwnProperty(pkg)) {
-                                    if (listPackage.hasOwnProperty(pkg) || listbuiltinModules.includes(pkg)) {
-                                        global.nodemodule[pkg] = require(pkg);
-                                    } else {
-                                        global.nodemodule[pkg] = require(pkgPath);
-                                    }
-                                }
-                            } catch {
-                                logger.log(global.getText("mirai", "cantInstall", pkg, command.config.name), "warning");
-                                execSync(`npm --package-lock false --save install ${pkg}@${command.config.dependencies[pkg] || ""}`, {
-                                    stdio: "inherit",
-                                    env: process.env,
-                                    shell: true,
-                                    cwd: join(__dirname, "nodemodule")
-                                });
-                                global.nodemodule[pkg] = require(pkg);
-                            }
-                        }
-                    }
-
-                    // Module Configuration Setup
-                    if (command.config.envConfig) {
-                        try {
-                            for (const envKey in command.config.envConfig) {
-                                if (typeof global.configModule[command.config.name] === "undefined") global.configModule[command.config.name] = {};
-                                if (typeof global.config[command.config.name] === "undefined") global.config[command.config.name] = {};
-
-                                if (typeof global.config[command.config.name][envKey] !== "undefined") {
-                                    global.configModule[command.config.name][envKey] = global.config[command.config.name][envKey];
-                                } else {
-                                    global.configModule[command.config.name][envKey] = command.config.envConfig[envKey] || "";
-                                }
-                            }
-                        } catch (e) {
-                            throw new Error(global.getText("mirai", "loadedConfig", command.config.name, JSON.stringify(e)));
-                        }
-                    }
-
-                    if (command.onLoad) {
-                        try {
-                            command.onLoad({ api, models });
-                        } catch (e) {
-                            throw new Error(global.getText("mirai", "cantOnload", command.config.name, JSON.stringify(e)), "error");
-                        }
-                    }
-
-                    if (command.handleEvent) global.client.eventRegistered.push(command.config.name);
-                    global.client.commands.set(command.config.name, command);
-                    logger.log(global.getText("mirai", "successLoadModule", command.config.name));
-                } catch (err) {
-                    logger.log(global.getText("mirai", "failLoadModule", command.config.name, err), "error");
+                    command.run({ api, event, args, global });
+                } catch (e) {
+                    api.sendMessage(`Error executing command: ${e.message}`, event.threadID);
                 }
             }
-        })();
-
-        // Load Events
-        (function () {
-            const eventFiles = readdirSync(join(global.client.mainPath, "Script/events"))
-                .filter(file => file.endsWith(".js") && !global.config.eventDisabled.includes(file));
-
-            for (const file of eventFiles) {
-                try {
-                    var event = require(join(global.client.mainPath, "Script/events", file));
-
-                    if (!event.config || !event.run) {
-                        throw new Error(global.getText("mirai", "errorFormat"));
-                    }
-                    if (global.client.events.has(event.config.name) || "") {
-                        throw new Error(global.getText("mirai", "nameExist"));
-                    }
-
-                    global.client.events.set(event.config.name, event);
-                    logger.log(global.getText("mirai", "successLoadModule", event.config.name));
-                } catch (err) {
-                    logger.log(global.getText("mirai", "failLoadModule", event.config.name, err), "error");
-                }
-            }
-        })();
-
-        console.log("Bot successfully initialized!");
+        }
     });
-}
+});
