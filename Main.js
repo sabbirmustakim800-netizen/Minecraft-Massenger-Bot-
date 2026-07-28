@@ -2,11 +2,20 @@ const moment = require("moment-timezone");
 const { readdirSync, readFileSync, writeFileSync, existsSync } = require("fs-extra");
 const { join, resolve } = require("path");
 const { execSync } = require("child_process");
-const logger = require("./utils/log");
-const login = require("fca-unofficial"); // Sabbir-fca এর বদলে স্ট্যান্ডার্ড fca-unofficial
+const rawLogger = require("./utils/log");
+const login = require("fca-unofficial");
 const axios = require("axios");
 
-const listPackage = JSON.parse(readFileSync("./package.json")).dependencies || {};
+// Safe Logger Wrapper
+const logger = (msg, type = "[ BOT ]") => {
+    if (typeof rawLogger === "function") {
+        rawLogger(msg, type);
+    } else if (rawLogger && typeof rawLogger.log === "function") {
+        rawLogger.log(msg, type);
+    } else {
+        console.log(`[ ${type} ] ${msg}`);
+    }
+};
 
 const BOT_ART = `
   ██████╗░██████╗░██████╗░██████╗░████████╗
@@ -68,37 +77,47 @@ global.language = new Object();
 
 // 1. Config Loader
 var configValue;
-try {
-    global.client.configPath = join(global.client.mainPath, "config.json");
-    configValue = require(global.client.configPath);
-    logger.log("Found config.json", "[ GLOBAL BOT ]");
-} catch {
-    if (existsSync(global.client.configPath.replace(/\.json/g, "") + ".temp")) {
-        configValue = readFileSync(global.client.configPath.replace(/\.json/g, "") + ".temp");
-        configValue = JSON.parse(configValue);
-        logger.log("Loaded backup config.temp", "[ GLOBAL BOT ]");
-    } else {
-        return logger.log("config.json not found!", "error");
+global.client.configPath = join(global.client.mainPath, "config.json");
+
+if (existsSync(global.client.configPath)) {
+    try {
+        configValue = require(global.client.configPath);
+        logger("Found config.json", "[ GLOBAL BOT ]");
+    } catch (e) {
+        logger("Error parsing config.json", "error");
     }
+} else if (existsSync(global.client.configPath.replace(/\.json/g, "") + ".temp")) {
+    try {
+        configValue = JSON.parse(readFileSync(global.client.configPath.replace(/\.json/g, "") + ".temp"));
+        logger("Loaded backup config.temp", "[ GLOBAL BOT ]");
+    } catch (e) {
+        logger("Error reading config.temp", "error");
+    }
+} else {
+    logger("config.json not found in root directory!", "error");
+    process.exit(1);
 }
 
 try {
     for (const key in configValue) {
         global.config[key] = configValue[key];
     }
-    logger.log("Config Loaded successfully!", "[ GLOBAL BOT ]");
+    logger("Config Loaded successfully!", "[ GLOBAL BOT ]");
 } catch {
-    return logger.log("Can't load config.json", "error");
+    logger("Can't load config.json", "error");
+    process.exit(1);
 }
 
 // Config backup write
-writeFileSync(
-    global.client.configPath + ".temp",
-    JSON.stringify(global.config, null, 4),
-    "utf-8"
-);
+try {
+    writeFileSync(
+        global.client.configPath + ".temp",
+        JSON.stringify(global.config, null, 4),
+        "utf-8"
+    );
+} catch (e) {}
 
-// 2. Detect Correct Command/Event Paths Automatically
+// 2. Detect Command & Event Paths
 let commandsPath = join(global.client.mainPath, "Script/commands");
 let eventsPath = join(global.client.mainPath, "Script/events");
 
@@ -124,16 +143,28 @@ var appStateFile = resolve(
 );
 
 if (!existsSync(appStateFile)) {
-    return logger.log("appstate.json file not found! Please provide a valid appstate.", "error");
+    logger("appstate.json file not found! Please check your root directory.", "error");
+    process.exit(1);
 }
 
-var appState = require(appStateFile);
+var appState;
+try {
+    appState = require(appStateFile);
+} catch (e) {
+    logger("Failed to parse appstate.json!", "error");
+    process.exit(1);
+}
 
 login({ appState }, async (err, api) => {
-    if (err) return logger.log("Facebook Login Error: " + JSON.stringify(err), "error");
+    if (err) {
+        logger("Facebook Login Error: " + JSON.stringify(err), "error");
+        return;
+    }
 
     api.setOptions(global.config.FCAOption || { listenEvents: true, selfListen: false });
-    writeFileSync(appStateFile, JSON.stringify(api.getAppState(), null, "\t"));
+    try {
+        writeFileSync(appStateFile, JSON.stringify(api.getAppState(), null, "\t"));
+    } catch (e) {}
 
     global.client.api = api;
     global.config.version = "1.2.14";
@@ -162,9 +193,9 @@ login({ appState }, async (err, api) => {
 
                 if (command.handleEvent) global.client.eventRegistered.push(command.config.name);
                 global.client.commands.set(command.config.name, command);
-                logger.log(`Loaded Command: ${command.config.name}`, "[ COMMAND ]");
+                logger(`Loaded Command: ${command.config.name}`, "[ COMMAND ]");
             } catch (err) {
-                logger.log(`Failed to load command ${file}: ${err.message}`, "error");
+                logger(`Failed to load command ${file}: ${err.message}`, "error");
             }
         }
     }
@@ -180,14 +211,14 @@ login({ appState }, async (err, api) => {
                 if (!event.config || !event.run) continue;
 
                 global.client.events.set(event.config.name, event);
-                logger.log(`Loaded Event: ${event.config.name}`, "[ EVENT ]");
+                logger(`Loaded Event: ${event.config.name}`, "[ EVENT ]");
             } catch (err) {
-                logger.log(`Failed to load event ${file}: ${err.message}`, "error");
+                logger(`Failed to load event ${file}: ${err.message}`, "error");
             }
         }
     }
 
-    logger.log(`Bot started successfully!`, "[ SUCCESS ]");
+    logger("Bot started successfully!", "[ SUCCESS ]");
 
     // Message Listener
     api.listenMqtt((error, event) => {
