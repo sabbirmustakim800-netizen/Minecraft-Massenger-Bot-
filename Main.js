@@ -1,13 +1,12 @@
 const moment = require("moment-timezone");
-const { readdirSync, readFileSync, writeFileSync, existsSync, unlinkSync, rm } = require("fs-extra");
+const { readdirSync, readFileSync, writeFileSync, existsSync } = require("fs-extra");
 const { join, resolve } = require("path");
 const { execSync } = require("child_process");
 const logger = require("./utils/log");
-const login = require("Sabbir-fca");
+const login = require("fca-unofficial"); // Sabbir-fca এর বদলে স্ট্যান্ডার্ড fca-unofficial
 const axios = require("axios");
 
 const listPackage = JSON.parse(readFileSync("./package.json")).dependencies || {};
-const listbuiltinModules = require("module").builtinModules;
 
 const BOT_ART = `
   ██████╗░██████╗░██████╗░██████╗░████████╗
@@ -22,7 +21,7 @@ const BOT_ART = `
 
 console.log(BOT_ART);
 
-// Global State
+// Global State Setup
 global.client = {
     commands: new Map(),
     events: new Map(),
@@ -99,45 +98,7 @@ writeFileSync(
     "utf-8"
 );
 
-// 2. Language Loader
-try {
-    const langFilePath = join(__dirname, "languages", (global.config.language || "en") + ".lang");
-    if (existsSync(langFilePath)) {
-        const langFile = readFileSync(langFilePath, { encoding: "utf-8" }).split(/\r?\n|\r/);
-        const langData = langFile.filter(line => line.indexOf("#") !== 0 && line !== "");
-
-        for (const item of langData) {
-            const getSeparator = item.indexOf("=");
-            const itemKey = item.slice(0, getSeparator);
-            const itemValue = item.slice(getSeparator + 1, item.length);
-            const head = itemKey.slice(0, itemKey.indexOf("."));
-            const key = itemKey.replace(head + ".", "");
-            const value = itemValue.replace(/\\n/gi, "\n");
-
-            if (typeof global.language[head] === "undefined") {
-                global.language[head] = new Object();
-            }
-            global.language[head][key] = value;
-        }
-    }
-} catch (e) {
-    logger.log("Language file load warning: " + e.message, "warning");
-}
-
-global.getText = function (...args) {
-    const langContainer = global.language;
-    if (!langContainer || !langContainer.hasOwnProperty(args[0])) {
-        return args[1] || args[0];
-    }
-    var text = langContainer[args[0]][args[1]] || args[1];
-    for (var i = args.length - 1; i > 1; i--) {
-        const reg = new RegExp("%" + (i - 1), "g");
-        text = text.replace(reg, args[i]);
-    }
-    return text;
-};
-
-// 3. Detect Correct Command/Event Paths Automatically
+// 2. Detect Correct Command/Event Paths Automatically
 let commandsPath = join(global.client.mainPath, "Script/commands");
 let eventsPath = join(global.client.mainPath, "Script/events");
 
@@ -157,7 +118,7 @@ if (!existsSync(eventsPath)) {
     }
 }
 
-// 4. AppState Check & Login
+// 3. AppState Check & Login
 var appStateFile = resolve(
     join(global.client.mainPath, global.config.APPSTATEPATH || "appstate.json")
 );
@@ -226,23 +187,13 @@ login({ appState }, async (err, api) => {
         }
     }
 
-    logger.log(`Bot started successfully! Premium FCA active.`, "[ SUCCESS ]");
+    logger.log(`Bot started successfully!`, "[ SUCCESS ]");
 
-    // 5. Message Listener (Fixes the non-responsive bot issue)
-    const handleListener = require("./includes/listen")({ api });
-    
+    // Message Listener
     api.listenMqtt((error, event) => {
-        if (error) {
-            if (JSON.stringify(error).includes("404")) {
-                logger.log("Connection lost, retrying...", "error");
-            }
-            return;
-        }
-        
-        // Execute handleListener if available, or basic command trigger
-        if (typeof handleListener === "function") {
-            handleListener(event);
-        } else if (event.type === "message" || event.type === "message_reply") {
+        if (error) return;
+
+        if (event.type === "message" || event.type === "message_reply") {
             const prefix = global.config.PREFIX || "!";
             if (!event.body || !event.body.startsWith(prefix)) return;
 
