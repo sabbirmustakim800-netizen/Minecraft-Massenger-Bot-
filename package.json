@@ -8,8 +8,8 @@
         "npm": ">=7.0.0"
     },
     "scripts": {
-        "start": "node --max-old-space-size=400 Sahu.js"
-    },
+    "start": "until node Sahu.js; do echo 'Bot crashed, restarting in 3s...'; sleep 3; done"
+    }
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ntkhang03/Goat-Bot-V2.git"
