@@ -1,3 +1,13 @@
+process.on('unhandledRejection', (reason, promise) => {
+    console.log('[ Warning ] » Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err, origin) => {
+    console.log('[ Warning ] » Uncaught Exception:', err);
+});
+
+// এর নিচে তোমার আগের সব কোড যেমন ছিল তেমনই থাকবে...
+
 const { spawn } = require("child_process");
 const axios = require("axios");
 const logger = require("./utils/log");
